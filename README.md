@@ -155,9 +155,9 @@ Will allow you to see a continuous print out of the log in the terminal. Once th
 - Probe data at the locations defined in `controlDict` is written to `postProcessing/probes/`
  
 
-![alt text](images/ySlice_1.0U_x.png)
+![alt text](Images/ySlice_1.0U_x.png)
 
-![alt text](images/zSlice_1.0U_UMean.png)
+![alt text](Images/zSlice_1.0U_UMean.png)
 
 ---
 
