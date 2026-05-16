@@ -1,0 +1,174 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     4.0                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+DebugSwitches
+{
+
+// Nothing to use in here currently, everything is within the AllRun file
+
+}
+
+application     brinkmanPimpleFoam;
+
+startFrom       latestTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         10000;
+
+deltaT          0.05;
+
+maxDeltaT       10;
+
+// stopAt      writeNow;
+
+// writeControl    runTime;
+// writeInterval   0.2;
+
+writeControl    timeStep;
+writeInterval   10;
+
+purgeWrite      10;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression on;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable yes;
+
+adjustTimeStep  yes;
+
+maxCo           50;
+
+functions
+(
+    residuals
+    {
+        type            residuals;
+        libs            ("libutilityFunctionObjects.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        fields          (p k omega);
+    }
+    fieldAverage1
+    {
+        type            fieldAverage;
+        functionObjectLibs ("libfieldFunctionObjects.so");
+        enabled         true;
+        outputControl   outputTime;  
+        timeStart       10;        
+        
+        fields
+        (
+            U
+            {
+                mean        on;
+                prime2Mean  on;
+                base        time;
+            }
+            p
+            {
+                mean        on;
+                prime2Mean  off;
+                base        time;
+            }
+        );
+    }
+    forces1
+    {
+        type            forces;
+        libs            ("libforces.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        patches         (); 
+        porosity        on; 
+        cellZone        vegetationZone;
+        rho             rhoInf;
+        rhoInf          1000;
+        CofR            (0 0 0);
+    }
+    probes
+    {
+        type            probes;
+        functionObjectLibs ("libsampling.so");
+        outputControl   timeStep;
+        outputInterval  10;
+        probeLocations
+        (
+            ( -0.30  0.10  0.00 )
+            (  0.00  0.10  0.15 )
+            (  0.10  0.10  0.00 )
+            (  0.30  0.10  0.00 )
+            (  0.50  0.10  0.00 )
+            (  1.00  0.10  0.00 )
+            (  1.50  0.10  0.00 )
+            (  2.00  0.10  0.00 )
+            (  2.50  0.10  0.00 )
+            (  0.15  0.10  0.15 )
+            (  0.00  0.10  0.40 )
+            (  0.10  0.30  0.00 )
+            (  0.30  0.30  0.00 )
+            (  0.15  0.30  0.15 )
+	    (  0.00  0.10  0.00 )
+	    ( -0.10  0.10  0.00 )
+        );
+        fields
+        (
+            p U
+        );
+    }
+    minMaxP
+    {
+        type minMaxField;
+        functionObjectLibs ("libfieldFunctionObjects.so");
+        name p;
+    }
+    minMaxU
+    {
+        type minMaxField;
+        functionObjectLibs ("libfieldFunctionObjects.so");
+        name U;
+    }
+    minMaxNut
+    {
+        type minMaxField;
+        functionObjectLibs ("libfieldFunctionObjects.so");
+        name nut;
+    }
+    minMaxK
+    {
+        type minMaxField;
+        functionObjectLibs ("libfieldFunctionObjects.so");
+        name k;
+    }
+    minMaxNut
+    {
+        type minMaxField;
+        functionObjectLibs ("libfieldFunctionObjects.so");
+        name epsilon;
+    }
+);
+
+
+// ************************************************************************* //

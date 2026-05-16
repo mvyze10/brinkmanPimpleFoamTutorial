@@ -1,0 +1,90 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     4.0                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "p|pcorr"
+    {
+        solver          GAMG;
+        tolerance       1e-05;  
+        relTol          0.1;   
+        
+        smoother        GaussSeidel;
+        nPreSweeps      0;
+        nPostSweeps     2;
+        cacheAgglomeration on;
+        agglomerator    faceAreaPair;
+        nCellsInCoarsestLevel 10;
+        mergeLevels     1;
+    }
+
+    pFinal
+    {
+	$p;
+        tolerance       1e-05;
+        relTol          0;
+    }
+    "U|k|epsilon|omega"
+    {
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        minIter         0;
+        maxIter         1000;
+        tolerance       1e-05;
+        relTol          0.1;    // Stops early on intermediate passes
+    }
+
+    "UFinal|kFinal|epsilonFinal|omegaFinal"
+    {
+        $U;                     // Inherits the smoothSolver settings
+        tolerance       1e-06;
+        relTol          0;      // Forces strict solving on the final pass
+    }
+}
+    PIMPLE
+{
+    nOuterCorrectors 2;
+    nCorrectors      2;
+    nNonOrthogonalCorrectors 0;
+    
+    residualControl
+    {
+        U { tolerance 1e-4; relTol 0; }
+        p { tolerance 1e-3; relTol 0; }
+    }
+}
+
+
+relaxationFactors
+{
+    equations
+    {
+        U       0.5;
+        k       0.5;
+        epsilon 0.5;
+        omega   0.5;
+        
+       
+        ".*Final" 1.0; 
+    }
+    
+    fields
+    {
+        p       0.3;
+        pFinal  1.0;
+    }
+}
+// ************************************************************************* //

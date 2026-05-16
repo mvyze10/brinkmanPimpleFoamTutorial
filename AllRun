@@ -1,0 +1,105 @@
+#!/bin/bash
+set -e
+cd ${0%/*} || exit 1
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+. $WM_PROJECT_DIR/bin/tools/CleanFunctions
+application="brinkmanPimpleFoam"
+
+cleanCase
+\rm -f *.dat
+\rm -rf 0
+\rm -rf constant/polyMesh
+\rm -rf postprocessing
+rm -rf 10000
+rm -rf 0.*
+rm -rf processor*
+rm -rf log.blockMesh
+rm -rf log.potentialFoam
+rm -rf log.refineHexMesh
+rm -rf log.cellSet
+rm -rf VTK
+
+rm -rf badFaces
+rm -rf log.pimpleFoam
+rm -rf log.decomposePar
+rm -rf processor*
+rm -rf log.reconstructPar
+rm -rf log.mpirun
+
+
+#!/bin/bash
+set -e
+cd ${0%/*} || exit 1
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+
+# creating polyMesh,logs and running blockMesh
+
+mkdir -p logs
+mkdir -p constant/polyMesh
+cp -f save/blockMeshDict constant/polyMesh/
+
+
+echo "Running blockMesh..."
+blockMesh > logs/log.blockMesh 2>&1
+
+
+# loops for refinement of mesh and wake from object
+for i in 1
+do
+echo "Refining Wide Region (Iteration $i)..."
+cp save/refineMeshDict.wide system/refineMeshDict
+rm -f log.cellSet log.refineMesh
+cp save/cellSetDict.wide system/cellSetDict
+cellSet >> logs/log.cellSetWide 2>&1
+refineMesh -dict -overwrite >> logs/log.refineMeshWide 2>&1
+done
+
+
+for i in 1 2
+do
+echo "Refining Medium Region (Iteration $i)..."
+cp save/refineMeshDict.medium system/refineMeshDict
+rm -f log.cellSet log.refineMesh
+cp save/cellSetDict.medium system/cellSetDict
+cellSet >> logs/log.cellSetMedium 2>&1
+refineMesh -dict -overwrite >> logs/log.refineMeshMedium 2>&1
+done
+
+for i in 1 2
+do
+echo "Refining Tight Region [3D] (Iteration $i)..."
+rm -f log.cellSet log.refineMesh
+cp save/refineMeshDict3D.tight system/refineMeshDict
+cp save/cellSetDict.tight system/cellSetDict
+cellSet >> logs/log.cellSetTight 2>&1
+refineMesh -dict -overwrite >> logs/log.refineMeshTight 2>&1
+done
+
+
+
+
+cp -r 0_org/* 0/
+
+
+echo "Creating Vegetation Zone..."
+rm -f log.cellSet log.refineHexMesh
+cp save/cellSetDict.cyl system/cellSetDict
+cellSet >> logs/log.cellSetVeg 2>&1
+
+echo "Converting sets to zones..."
+setsToZones -noFlipMap >> logs/log.setsToZones 2>&1
+
+echo "Exporting VTK for visualization..."
+foamToVTK -cellSet vegetationZone >> logs/log.foamToVTK 2>&1
+
+
+
+echo "Decomposing domain (decomposePar)..."
+decomposePar > logs/log.decomposePar 2>&1
+
+echo "Running solver in parallel (mpirun -np 12)..."
+mpirun -np 12 $application -parallel > logs/log.mpirun 2>&1
+
+echo "Reconstructing domain (reconstructPar)..."
+reconstructPar > logs/log.reconstructPar 2>&1

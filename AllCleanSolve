@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+cd ${0%/*} || exit 1
+. $WM_PROJECT_DIR/bin/tools/CleanFunctions
+application="pimpleFoam"
+
+rm -rf log.pimpleFoam
+rm -rf log.setFields
+rm -rf log.decomposePar
+rm -rf log.reconstructPar
+rm -rf log.mpirun
+\rm -f *.dat
+\rm -rf postprocessing
+rm -rf 10000
+rm -rf 0.*
+rm -rf [1-9]*
+rm -rf processor*

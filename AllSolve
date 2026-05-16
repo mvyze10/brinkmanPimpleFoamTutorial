@@ -1,0 +1,29 @@
+export MPI_BUFFER_SIZE=20000000
+#!/bin/bash
+set -e
+cd ${0%/*} || exit 1
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+application="brinkmanPimpleFoam"
+LOG="logs/log.decomposePar"
+
+
+if [ -f "$LOG" ] && grep -q "End" "$LOG" && [ -d "processor0" ]; then
+    echo "Valid decomposition found."
+    echo "Skipping decomposePar."
+else
+    echo "Running decomposePar..."
+    
+    rm -rf processor* 
+    decomposePar > $LOG 2>&1
+    
+    if ! grep -q "End" "$LOG"; then
+        echo "Error: decomposePar failed! Check $LOG."
+        exit 1
+    fi
+fi
+
+echo "Running solver in parallel (mpirun -np 12)..."
+mpirun -np 12 $application -parallel > logs/log.mpirun 2>&1
+
+echo "Reconstructing domain (reconstructPar)..."
+reconstructPar > logs/log.reconstructPar 2>&1

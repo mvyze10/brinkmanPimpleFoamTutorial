@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+cd ${0%/*} || exit 1
+. $WM_PROJECT_DIR/bin/tools/CleanFunctions
+application="pimpleDyMIbFoam"
+
+
+# cleaning previous attempts
+
+cleanCase
+rm -f *.dat
+rm -rf 0
+rm -rf constant/polyMesh
+rm -rf postProcessing
+rm -rf 10000
+rm -rf 0.*
+rm -rf processor*
+rm -rf VTK
+rm -rf [1-9]*
+rm -rf badFaces
+rm -rf logs
